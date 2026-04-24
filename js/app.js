@@ -314,6 +314,7 @@ const App = (() => {
         const screen = document.getElementById('pin-screen');
         if (screen) screen.remove();
         document.getElementById('app').style.display = '';
+        handleRoute();
     }
 
     function changePin() {
