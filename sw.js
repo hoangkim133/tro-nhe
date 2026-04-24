@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nhatro-v2';
+const CACHE_NAME = 'nhatro-v3';
 const ASSETS = [
     './',
     './index.html',

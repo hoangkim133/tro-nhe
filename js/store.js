@@ -65,6 +65,7 @@ const Store = (() => {
             name: house.name || '',
             address: house.address || '',
             defaultRates: {
+                rent: house.rentRate || 0,
                 electric: house.electricRate || 3500,
                 water: house.waterRate || 15000,
                 garbage: house.garbageRate || 20000,
@@ -128,6 +129,8 @@ const Store = (() => {
             tenant: room.tenant || '',
             phone: room.phone || '',
             rentPrice: room.rentPrice || 0,
+            initialElectric: room.initialElectric || 0,
+            initialWater: room.initialWater || 0,
             customRates: room.customRates || null,
             meters: [],
             updatedAt: now(),
@@ -201,7 +204,7 @@ const Store = (() => {
             water: custom.water || defaultRates.water || 15000,
             garbage: custom.garbage || defaultRates.garbage || 20000,
             internet: custom.internet || defaultRates.internet || 100000,
-            rent: room.rentPrice || 0
+            rent: room.rentPrice || defaultRates.rent || 0
         };
     }
 

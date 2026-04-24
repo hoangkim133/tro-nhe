@@ -84,6 +84,9 @@ const HouseView = (() => {
     }
 
     function showAddRoom() {
+        const house = Store.getHouse(currentHouseId);
+        const defaultRent = (house && house.defaultRates) ? house.defaultRates.rent || 0 : 0;
+
         App.showModal('Thêm phòng mới', `
             <div class="form-group">
                 <label class="form-label">Tên phòng *</label>
@@ -98,8 +101,20 @@ const HouseView = (() => {
                 <input class="form-input" type="tel" id="input-room-phone" placeholder="VD: 0901234567" inputmode="tel">
             </div>
             <div class="form-group">
-                <label class="form-label">Tiền phòng (đ/tháng) *</label>
-                <input class="form-input" type="number" id="input-room-rent" placeholder="VD: 2000000" inputmode="numeric">
+                <label class="form-label">Tiền phòng (đ/tháng)</label>
+                <input class="form-input" type="number" id="input-room-rent" value="${defaultRent || ''}" placeholder="Để trống = dùng giá chung" inputmode="numeric">
+            </div>
+            <div class="divider"></div>
+            <p class="text-secondary mb-16" style="font-size:0.85rem;">📝 Chỉ số điện nước hiện tại (ban đầu)</p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">⚡ Số điện hiện tại *</label>
+                    <input class="form-input" type="number" id="input-room-electric" placeholder="VD: 1234" inputmode="numeric">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">💧 Số nước hiện tại *</label>
+                    <input class="form-input" type="number" id="input-room-water" placeholder="VD: 56" inputmode="numeric">
+                </div>
             </div>
             <button class="btn btn-primary mt-16" onclick="HouseView.addRoom()">✅ Thêm phòng</button>
         `);
@@ -114,11 +129,20 @@ const HouseView = (() => {
             return;
         }
 
+        const electricInit = document.getElementById('input-room-electric').value;
+        const waterInit = document.getElementById('input-room-water').value;
+        if (electricInit === '' || waterInit === '') {
+            App.showToast('Vui lòng nhập số điện nước ban đầu', 'error');
+            return;
+        }
+
         Store.addRoom(currentHouseId, {
             name: name,
             tenant: document.getElementById('input-room-tenant').value.trim(),
             phone: document.getElementById('input-room-phone').value.trim(),
-            rentPrice: parseInt(document.getElementById('input-room-rent').value) || 0
+            rentPrice: parseInt(document.getElementById('input-room-rent').value) || 0,
+            initialElectric: parseInt(electricInit) || 0,
+            initialWater: parseInt(waterInit) || 0
         });
 
         App.hideModal();
@@ -134,6 +158,11 @@ const HouseView = (() => {
 
         App.showModal('Cài đặt giá chung — ' + house.name, `
             <p class="text-secondary mb-16" style="font-size:0.85rem;">Giá này sẽ áp dụng cho tất cả phòng (trừ phòng có giá riêng).</p>
+            <div class="form-group">
+                <label class="form-label">🏠 Tiền phòng chung (đ/tháng)</label>
+                <input class="form-input" type="number" id="input-def-rent" value="${rates.rent || 0}" inputmode="numeric">
+                <div class="form-hint">Phòng có giá riêng sẽ không bị ảnh hưởng</div>
+            </div>
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">⚡ Điện (đ/kWh)</label>
@@ -165,6 +194,7 @@ const HouseView = (() => {
     function saveHouseSettings() {
         Store.updateHouse(currentHouseId, {
             defaultRates: {
+                rent: parseInt(document.getElementById('input-def-rent').value) || 0,
                 electric: parseInt(document.getElementById('input-def-electric').value) || 3500,
                 water: parseInt(document.getElementById('input-def-water').value) || 15000,
                 garbage: parseInt(document.getElementById('input-def-garbage').value) || 20000,

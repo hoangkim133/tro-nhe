@@ -73,10 +73,10 @@ const BillingView = (() => {
         const container = document.getElementById('main-content');
         const rates = Store.getRatesForRoom(currentHouseId, currentRoomId);
 
-        // Get last meter reading for auto-fill
+        // Get last meter reading for auto-fill, fallback to initial readings
         const lastMeter = Store.getLatestMeter(currentHouseId, currentRoomId);
-        const electricOld = lastMeter ? lastMeter.electricNew : 0;
-        const waterOld = lastMeter ? lastMeter.waterNew : 0;
+        const electricOld = lastMeter ? lastMeter.electricNew : (room.initialElectric || 0);
+        const waterOld = lastMeter ? lastMeter.waterNew : (room.initialWater || 0);
 
         let html = `
             <div class="fade-in">
@@ -89,8 +89,8 @@ const BillingView = (() => {
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Số cũ</label>
-                        <input class="form-input" type="number" id="input-electric-old" value="${electricOld}" inputmode="numeric">
-                        <div class="form-hint">${lastMeter ? 'Từ tháng trước' : 'Nhập số ban đầu'}</div>
+                        <input class="form-input" type="number" id="input-electric-old" value="${electricOld}" readonly style="background:#f0f0f0; color:var(--text-secondary);">
+                        <div class="form-hint">${lastMeter ? 'Từ tháng trước' : 'Số ban đầu'}</div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Số mới *</label>
@@ -102,8 +102,8 @@ const BillingView = (() => {
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Số cũ</label>
-                        <input class="form-input" type="number" id="input-water-old" value="${waterOld}" inputmode="numeric">
-                        <div class="form-hint">${lastMeter ? 'Từ tháng trước' : 'Nhập số ban đầu'}</div>
+                        <input class="form-input" type="number" id="input-water-old" value="${waterOld}" readonly style="background:#f0f0f0; color:var(--text-secondary);">
+                        <div class="form-hint">${lastMeter ? 'Từ tháng trước' : 'Số ban đầu'}</div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Số mới *</label>
