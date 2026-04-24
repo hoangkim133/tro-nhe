@@ -196,15 +196,16 @@ const Store = (() => {
         const room = getRoom(houseId, roomId);
         if (!house || !room) return null;
 
-        const defaultRates = house.defaultRates || {};
-        const custom = room.customRates || {};
+        const d = house.defaultRates || {};
+        const c = room.customRates || {};
+        const v = (custom, def, fallback) => custom != null ? custom : (def != null ? def : fallback);
 
         return {
-            electric: custom.electric || defaultRates.electric || 3500,
-            water: custom.water || defaultRates.water || 15000,
-            garbage: custom.garbage || defaultRates.garbage || 20000,
-            internet: custom.internet || defaultRates.internet || 100000,
-            rent: room.rentPrice || defaultRates.rent || 0
+            electric: v(c.electric, d.electric, 3500),
+            water: v(c.water, d.water, 15000),
+            garbage: v(c.garbage, d.garbage, 20000),
+            internet: v(c.internet, d.internet, 100000),
+            rent: v(room.rentPrice, d.rent, 0)
         };
     }
 
