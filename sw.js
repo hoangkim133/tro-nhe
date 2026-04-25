@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nhatro-v5';
+const CACHE_NAME = 'nhatro-v6';
 const ASSETS = [
     './',
     './index.html',
@@ -25,10 +25,11 @@ self.addEventListener('install', (event) => {
             return cache.addAll(ASSETS);
         })
     );
+    // Activate new SW immediately
     self.skipWaiting();
 });
 
-// Activate - clean old caches
+// Activate - clean old caches + take control immediately
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((keys) => {
@@ -37,16 +38,22 @@ self.addEventListener('activate', (event) => {
             );
         })
     );
+    // Take over all clients immediately
     self.clients.claim();
 });
 
-// Fetch - cache first, then network
+// Fetch - Network first for HTML/JS/CSS, cache first for images/fonts
 self.addEventListener('fetch', (event) => {
     // Skip non-GET requests and Google Apps Script calls
     if (event.request.method !== 'GET') return;
     if (event.request.url.includes('script.google.com')) return;
-    if (event.request.url.includes('fonts.googleapis.com') || event.request.url.includes('fonts.gstatic.com')) {
-        // Network first for fonts
+
+    const url = new URL(event.request.url);
+    const isAppFile = url.origin === self.location.origin;
+    const isStaticAsset = url.pathname.match(/\.(png|jpg|svg|woff2?)$/);
+
+    if (!isAppFile) {
+        // External resources (fonts etc): network first, fallback cache
         event.respondWith(
             fetch(event.request).then(response => {
                 const clone = response.clone();
@@ -57,13 +64,26 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    if (isStaticAsset) {
+        // Icons/images: cache first (rarely change)
+        event.respondWith(
+            caches.match(event.request).then(cached => {
+                return cached || fetch(event.request).then(response => {
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                    return response;
+                });
+            })
+        );
+        return;
+    }
+
+    // HTML/JS/CSS: Network first, fallback cache (always get latest)
     event.respondWith(
-        caches.match(event.request).then((cached) => {
-            return cached || fetch(event.request).then(response => {
-                const clone = response.clone();
-                caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-                return response;
-            });
-        })
+        fetch(event.request).then(response => {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+            return response;
+        }).catch(() => caches.match(event.request))
     );
 });
