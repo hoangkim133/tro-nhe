@@ -216,17 +216,23 @@ const Store = (() => {
         const room = (house.rooms || []).find(r => r.id === roomId);
         if (!room) return null;
 
-        const rates = getRatesForRoom(houseId, roomId);
+        // Use custom rates if provided (for editing), otherwise use room's rates
+        const rates = meterData.customRates || getRatesForRoom(houseId, roomId);
 
         const electricUsage = (meterData.electricNew || 0) - (meterData.electricOld || 0);
         const waterUsage = (meterData.waterNew || 0) - (meterData.waterOld || 0);
 
         const totalAmount =
             (rates.rent || 0) +
-            (electricUsage * rates.electric) +
-            (waterUsage * rates.water) +
-            rates.garbage +
-            rates.internet;
+            (electricUsage * (rates.electric || 0)) +
+            (waterUsage * (rates.water || 0)) +
+            (rates.garbage || 0) +
+            (rates.internet || 0);
+
+        // Preserve paid status if editing existing meter
+        if (!room.meters) room.meters = [];
+        const existingMeter = room.meters.find(m => m.month === meterData.month);
+        const wasPaid = existingMeter ? existingMeter.paid : false;
 
         const newMeter = {
             id: generateId('m'),
@@ -237,12 +243,11 @@ const Store = (() => {
             waterNew: meterData.waterNew || 0,
             ratesSnapshot: { ...rates },
             totalAmount: totalAmount,
-            paid: false,
-            createdAt: now()
+            paid: wasPaid,
+            createdAt: existingMeter ? existingMeter.createdAt : now()
         };
 
         // Remove existing meter for same month if exists
-        if (!room.meters) room.meters = [];
         room.meters = room.meters.filter(m => m.month !== meterData.month);
         room.meters.push(newMeter);
 

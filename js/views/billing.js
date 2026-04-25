@@ -170,10 +170,10 @@ const BillingView = (() => {
     function editMeter() {
         const meter = Store.getMeterByMonth(currentHouseId, currentRoomId, currentMonth);
         if (!meter) return;
+        const snap = meter.ratesSnapshot || {};
 
-        const room = Store.getRoom(currentHouseId, currentRoomId);
-
-        App.showModal('Sửa chỉ số — ' + Store.formatMonth(currentMonth), `
+        App.showModal('✏️ Sửa hóa đơn — ' + Store.formatMonth(currentMonth), `
+            <div class="section-title" style="margin-top:0;">Chỉ số điện nước</div>
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">⚡ Điện cũ</label>
@@ -194,7 +194,33 @@ const BillingView = (() => {
                     <input class="form-input" type="number" id="edit-w-new" value="${meter.waterNew}" inputmode="numeric">
                 </div>
             </div>
-            <button class="btn btn-primary mt-16" onclick="BillingView.saveEditMeter()">💾 Lưu</button>
+
+            <div class="section-title">Giá áp dụng</div>
+            <div class="form-group">
+                <label class="form-label">🏠 Tiền phòng</label>
+                <input class="form-input" type="number" id="edit-rent" value="${snap.rent || 0}" inputmode="numeric">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">⚡ Giá điện/kWh</label>
+                    <input class="form-input" type="number" id="edit-electric" value="${snap.electric || 0}" inputmode="numeric">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">💧 Giá nước/m³</label>
+                    <input class="form-input" type="number" id="edit-water" value="${snap.water || 0}" inputmode="numeric">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">🗑️ Tiền rác</label>
+                    <input class="form-input" type="number" id="edit-garbage" value="${snap.garbage || 0}" inputmode="numeric">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">📶 Internet</label>
+                    <input class="form-input" type="number" id="edit-internet" value="${snap.internet || 0}" inputmode="numeric">
+                </div>
+            </div>
+            <button class="btn btn-primary mt-16" onclick="BillingView.saveEditMeter()">💾 Lưu thay đổi</button>
         `);
     }
 
@@ -204,16 +230,25 @@ const BillingView = (() => {
         const waterOld = parseInt(document.getElementById('edit-w-old').value) || 0;
         const waterNew = parseInt(document.getElementById('edit-w-new').value) || 0;
 
+        const customRates = {
+            rent: parseInt(document.getElementById('edit-rent').value) || 0,
+            electric: parseInt(document.getElementById('edit-electric').value) || 0,
+            water: parseInt(document.getElementById('edit-water').value) || 0,
+            garbage: parseInt(document.getElementById('edit-garbage').value) || 0,
+            internet: parseInt(document.getElementById('edit-internet').value) || 0
+        };
+
         Store.addMeter(currentHouseId, currentRoomId, {
             month: currentMonth,
             electricOld,
             electricNew,
             waterOld,
-            waterNew
+            waterNew,
+            customRates
         });
 
         App.hideModal();
-        App.showToast('Đã cập nhật!', 'success');
+        App.showToast('Đã cập nhật hóa đơn!', 'success');
         render(currentHouseId, currentRoomId, currentMonth);
     }
 
