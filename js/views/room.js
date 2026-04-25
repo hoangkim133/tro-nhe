@@ -4,6 +4,7 @@
 const RoomView = (() => {
     let currentHouseId = null;
     let currentRoomId = null;
+    let selectedMonth = null;
 
     function render(houseId, roomId) {
         currentHouseId = houseId;
@@ -17,7 +18,7 @@ const RoomView = (() => {
         }
 
         const container = document.getElementById('main-content');
-        const currentMonth = Store.getCurrentMonth();
+        const currentMonth = selectedMonth || Store.getCurrentMonth();
         const meter = Store.getMeterByMonth(houseId, roomId, currentMonth);
         const rates = Store.getRatesForRoom(houseId, roomId);
 
@@ -38,21 +39,27 @@ const RoomView = (() => {
             </div>
         `;
 
-        // Quick actions
+        // Month selector + quick actions
+        const months = getMonthOptions();
         html += `
-            <div class="section-title">${Store.formatMonth(currentMonth)}</div>
+            <div class="section-title">Tạo / xem hóa đơn</div>
+            <div style="display:flex; gap:10px; align-items:center; margin-bottom:12px;">
+                <select id="select-month" class="form-input" style="min-height:48px; flex:1;" onchange="RoomView.onMonthChange()">
+                    ${months.map(m => `<option value="${m.value}" ${m.value === currentMonth ? 'selected' : ''}>${m.label}</option>`).join('')}
+                </select>
+            </div>
         `;
 
         if (!meter) {
             html += `
-                <button class="btn btn-secondary mb-8" onclick="App.navigate('billing', '${houseId}', '${roomId}')">
+                <button class="btn btn-secondary mb-8" onclick="RoomView.goToBilling()">
                     📝 Nhập chỉ số điện nước
                 </button>
             `;
         } else {
             html += `
-                <button class="btn btn-primary mb-8" onclick="App.navigate('billing', '${houseId}', '${roomId}')">
-                    📄 Xem hóa đơn tháng này
+                <button class="btn btn-primary mb-8" onclick="RoomView.goToBilling()">
+                    📄 Xem hóa đơn ${Store.formatMonth(currentMonth)}
                 </button>
             `;
         }
@@ -238,5 +245,29 @@ const RoomView = (() => {
         App.navigate('house', currentHouseId);
     }
 
-    return { render, showEditRoom, saveEditRoom, showCustomRates, saveCustomRates, clearCustomRates, confirmDelete, deleteRoom };
+    function getMonthOptions() {
+        const now = new Date();
+        const options = [];
+        for (let i = -6; i <= 5; i++) {
+            const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+            const value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+            const label = Store.formatMonth(value) + (i === 0 ? ' (tháng này)' : '');
+            options.push({ value, label });
+        }
+        return options;
+    }
+
+    function goToBilling() {
+        const select = document.getElementById('select-month');
+        const month = select ? select.value : Store.getCurrentMonth();
+        App.navigate('billing', currentHouseId, currentRoomId, month);
+    }
+
+    function onMonthChange() {
+        const select = document.getElementById('select-month');
+        selectedMonth = select.value;
+        render(currentHouseId, currentRoomId);
+    }
+
+    return { render, showEditRoom, saveEditRoom, showCustomRates, saveCustomRates, clearCustomRates, confirmDelete, deleteRoom, goToBilling, onMonthChange };
 })();
