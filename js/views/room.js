@@ -143,7 +143,7 @@ const RoomView = (() => {
             </div>
             <div class="form-group">
                 <label class="form-label">Tiền phòng (đ/tháng)</label>
-                <input class="form-input" type="number" id="edit-room-rent" value="${room.rentPrice || 0}" inputmode="numeric">
+                ${Store.moneyInput('edit-room-rent', room.rentPrice || 0)}
             </div>
             <button class="btn btn-primary mt-16" onclick="RoomView.saveEditRoom()">💾 Lưu</button>
         `);
@@ -154,7 +154,7 @@ const RoomView = (() => {
             name: document.getElementById('edit-room-name').value.trim(),
             tenant: document.getElementById('edit-room-tenant').value.trim(),
             phone: document.getElementById('edit-room-phone').value.trim(),
-            rentPrice: parseInt(document.getElementById('edit-room-rent').value) || 0
+            rentPrice: Store.parseMoney(document.getElementById('edit-room-rent').value)
         });
 
         App.hideModal();

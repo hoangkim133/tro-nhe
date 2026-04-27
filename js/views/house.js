@@ -102,7 +102,7 @@ const HouseView = (() => {
             </div>
             <div class="form-group">
                 <label class="form-label">Tiền phòng (đ/tháng)</label>
-                <input class="form-input" type="number" id="input-room-rent" value="${defaultRent || ''}" placeholder="Để trống = dùng giá chung" inputmode="numeric">
+                ${Store.moneyInput('input-room-rent', defaultRent || '', 'Để trống = dùng giá chung')}
             </div>
             <div class="divider"></div>
             <p class="text-secondary mb-16" style="font-size:0.85rem;">📝 Chỉ số điện nước hiện tại (ban đầu)</p>
@@ -140,7 +140,7 @@ const HouseView = (() => {
             name: name,
             tenant: document.getElementById('input-room-tenant').value.trim(),
             phone: document.getElementById('input-room-phone').value.trim(),
-            rentPrice: parseInt(document.getElementById('input-room-rent').value) || 0,
+            rentPrice: Store.parseMoney(document.getElementById('input-room-rent').value),
             initialElectric: parseInt(electricInit) || 0,
             initialWater: parseInt(waterInit) || 0
         });
@@ -160,27 +160,27 @@ const HouseView = (() => {
             <p class="text-secondary mb-16" style="font-size:0.85rem;">Giá này sẽ áp dụng cho tất cả phòng (trừ phòng có giá riêng).</p>
             <div class="form-group">
                 <label class="form-label">🏠 Tiền phòng chung (đ/tháng)</label>
-                <input class="form-input" type="number" id="input-def-rent" value="${rates.rent || 0}" inputmode="numeric">
+                ${Store.moneyInput('input-def-rent', rates.rent || 0)}
                 <div class="form-hint">Phòng có giá riêng sẽ không bị ảnh hưởng</div>
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">⚡ Điện (đ/kWh)</label>
-                    <input class="form-input" type="number" id="input-def-electric" value="${rates.electric || 3500}" inputmode="numeric">
+                    ${Store.moneyInput('input-def-electric', rates.electric || 3500)}
                 </div>
                 <div class="form-group">
                     <label class="form-label">💧 Nước (đ/m³)</label>
-                    <input class="form-input" type="number" id="input-def-water" value="${rates.water || 15000}" inputmode="numeric">
+                    ${Store.moneyInput('input-def-water', rates.water || 15000)}
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">🗑️ Rác (đ/tháng)</label>
-                    <input class="form-input" type="number" id="input-def-garbage" value="${rates.garbage || 20000}" inputmode="numeric">
+                    ${Store.moneyInput('input-def-garbage', rates.garbage || 20000)}
                 </div>
                 <div class="form-group">
                     <label class="form-label">📶 Internet (đ/tháng)</label>
-                    <input class="form-input" type="number" id="input-def-internet" value="${rates.internet || 100000}" inputmode="numeric">
+                    ${Store.moneyInput('input-def-internet', rates.internet || 100000)}
                 </div>
             </div>
             <div class="btn-group">
@@ -194,11 +194,11 @@ const HouseView = (() => {
     function saveHouseSettings() {
         Store.updateHouse(currentHouseId, {
             defaultRates: {
-                rent: parseInt(document.getElementById('input-def-rent').value) || 0,
-                electric: parseInt(document.getElementById('input-def-electric').value) || 3500,
-                water: parseInt(document.getElementById('input-def-water').value) || 15000,
-                garbage: parseInt(document.getElementById('input-def-garbage').value) || 20000,
-                internet: parseInt(document.getElementById('input-def-internet').value) || 100000
+                rent: Store.parseMoney(document.getElementById('input-def-rent').value),
+                electric: Store.parseMoney(document.getElementById('input-def-electric').value) || 3500,
+                water: Store.parseMoney(document.getElementById('input-def-water').value) || 15000,
+                garbage: Store.parseMoney(document.getElementById('input-def-garbage').value) || 20000,
+                internet: Store.parseMoney(document.getElementById('input-def-internet').value) || 100000
             }
         });
 

@@ -305,6 +305,37 @@ const Store = (() => {
         return new Intl.NumberFormat('vi-VN').format(amount) + 'đ';
     }
 
+    // --- Format number with separators ---
+    function formatNumber(n) {
+        return new Intl.NumberFormat('vi-VN').format(n);
+    }
+
+    // --- Parse formatted money string back to number ---
+    function parseMoney(str) {
+        if (!str) return 0;
+        return parseInt(String(str).replace(/[.\s]/g, '')) || 0;
+    }
+
+    // --- Generate money input HTML ---
+    function moneyInput(id, value, placeholder) {
+        const formatted = value ? formatNumber(value) : '';
+        return `<input class="form-input" type="text" id="${id}" value="${formatted}" placeholder="${placeholder || ''}" inputmode="numeric" onfocus="Store.onMoneyFocus(this)" oninput="Store.onMoneyInput(this)">`;
+    }
+
+    function onMoneyFocus(el) {
+        setTimeout(() => el.select(), 50);
+    }
+
+    function onMoneyInput(el) {
+        const raw = el.value.replace(/[^\d]/g, '');
+        const num = parseInt(raw) || 0;
+        const pos = el.selectionStart;
+        const oldLen = el.value.length;
+        el.value = num > 0 ? formatNumber(num) : '';
+        const newLen = el.value.length;
+        el.setSelectionRange(Math.max(0, pos + (newLen - oldLen)), Math.max(0, pos + (newLen - oldLen)));
+    }
+
     // --- Format month display ---
     function formatMonth(month) {
         const [y, m] = month.split('-');
@@ -326,7 +357,8 @@ const Store = (() => {
         getRooms, getRoom, addRoom, updateRoom, deleteRoom,
         getMeters, getLatestMeter, getMeterByMonth, getRatesForRoom,
         addMeter, togglePaid, getAllMeters,
-        getCurrentMonth, formatCurrency, formatMonth,
+        getCurrentMonth, formatCurrency, formatNumber, formatMonth,
+        parseMoney, moneyInput, onMoneyFocus, onMoneyInput,
         getSettings, saveSettings,
         exportData, importData,
         generateId

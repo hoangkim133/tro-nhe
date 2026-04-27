@@ -198,26 +198,26 @@ const BillingView = (() => {
             <div class="section-title">Giá áp dụng</div>
             <div class="form-group">
                 <label class="form-label">🏠 Tiền phòng</label>
-                <input class="form-input" type="number" id="edit-rent" value="${snap.rent || 0}" inputmode="numeric">
+                ${Store.moneyInput('edit-rent', snap.rent || 0)}
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">⚡ Giá điện/kWh</label>
-                    <input class="form-input" type="number" id="edit-electric" value="${snap.electric || 0}" inputmode="numeric">
+                    ${Store.moneyInput('edit-electric', snap.electric || 0)}
                 </div>
                 <div class="form-group">
                     <label class="form-label">💧 Giá nước/m³</label>
-                    <input class="form-input" type="number" id="edit-water" value="${snap.water || 0}" inputmode="numeric">
+                    ${Store.moneyInput('edit-water', snap.water || 0)}
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">🗑️ Tiền rác</label>
-                    <input class="form-input" type="number" id="edit-garbage" value="${snap.garbage || 0}" inputmode="numeric">
+                    ${Store.moneyInput('edit-garbage', snap.garbage || 0)}
                 </div>
                 <div class="form-group">
                     <label class="form-label">📶 Internet</label>
-                    <input class="form-input" type="number" id="edit-internet" value="${snap.internet || 0}" inputmode="numeric">
+                    ${Store.moneyInput('edit-internet', snap.internet || 0)}
                 </div>
             </div>
             <button class="btn btn-primary mt-16" onclick="BillingView.saveEditMeter()">💾 Lưu thay đổi</button>
@@ -231,11 +231,11 @@ const BillingView = (() => {
         const waterNew = parseInt(document.getElementById('edit-w-new').value) || 0;
 
         const customRates = {
-            rent: parseInt(document.getElementById('edit-rent').value) || 0,
-            electric: parseInt(document.getElementById('edit-electric').value) || 0,
-            water: parseInt(document.getElementById('edit-water').value) || 0,
-            garbage: parseInt(document.getElementById('edit-garbage').value) || 0,
-            internet: parseInt(document.getElementById('edit-internet').value) || 0
+            rent: Store.parseMoney(document.getElementById('edit-rent').value),
+            electric: Store.parseMoney(document.getElementById('edit-electric').value),
+            water: Store.parseMoney(document.getElementById('edit-water').value),
+            garbage: Store.parseMoney(document.getElementById('edit-garbage').value),
+            internet: Store.parseMoney(document.getElementById('edit-internet').value)
         };
 
         Store.addMeter(currentHouseId, currentRoomId, {
