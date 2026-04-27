@@ -73,16 +73,7 @@ const RoomView = (() => {
                 </div>
                 <div class="info">
                     <div class="title">Sửa thông tin phòng</div>
-                    <div class="desc">Tên, người thuê, tiền phòng</div>
-                </div>
-            </div>
-            <div class="settings-item" onclick="RoomView.showCustomRates()">
-                <div class="icon orange">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                </div>
-                <div class="info">
-                    <div class="title">Giá riêng cho phòng này</div>
-                    <div class="desc">${room.customRates ? 'Đang dùng giá riêng' : 'Đang dùng giá chung của nhà'}</div>
+                    <div class="desc">Tên, người thuê, tiền phòng, giá riêng</div>
                 </div>
             </div>
         `;
@@ -113,20 +104,18 @@ const RoomView = (() => {
             }
         }
 
-        // Delete room
-        html += `
-            <div class="mt-24">
-                <button class="btn btn-danger btn-sm" onclick="RoomView.confirmDelete()">🗑️ Xóa phòng này</button>
-            </div>
-        `;
-
+        html += '<div style="padding-bottom:80px;"></div>';
         html += '</div>';
         container.innerHTML = html;
     }
 
     function showEditRoom() {
         const room = Store.getRoom(currentHouseId, currentRoomId);
-        if (!room) return;
+        const house = Store.getHouse(currentHouseId);
+        if (!room || !house) return;
+
+        const custom = room.customRates || {};
+        const defaults = house.defaultRates || {};
 
         App.showModal('Sửa thông tin phòng', `
             <div class="form-group">
@@ -145,104 +134,57 @@ const RoomView = (() => {
                 <label class="form-label">Tiền phòng (đ/tháng)</label>
                 ${Store.moneyInput('edit-room-rent', room.rentPrice || 0)}
             </div>
-            <button class="btn btn-primary mt-16" onclick="RoomView.saveEditRoom()">💾 Lưu</button>
-        `);
-    }
 
-    function saveEditRoom() {
-        Store.updateRoom(currentHouseId, currentRoomId, {
-            name: document.getElementById('edit-room-name').value.trim(),
-            tenant: document.getElementById('edit-room-tenant').value.trim(),
-            phone: document.getElementById('edit-room-phone').value.trim(),
-            rentPrice: Store.parseMoney(document.getElementById('edit-room-rent').value)
-        });
-
-        App.hideModal();
-        App.showToast('Đã lưu!', 'success');
-        render(currentHouseId, currentRoomId);
-    }
-
-    function showCustomRates() {
-        const room = Store.getRoom(currentHouseId, currentRoomId);
-        const house = Store.getHouse(currentHouseId);
-        if (!room || !house) return;
-
-        const custom = room.customRates || {};
-        const defaults = house.defaultRates || {};
-
-        App.showModal('Giá riêng — ' + room.name, `
-            <p class="text-secondary mb-16" style="font-size:0.85rem;">Để trống = dùng giá chung của nhà.</p>
+            <div class="divider"></div>
+            <p class="text-secondary mb-16" style="font-size:0.85rem;">💰 Giá riêng cho phòng này (để trống = dùng giá chung của nhà)</p>
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">⚡ Điện (đ/kWh)</label>
-                    <input class="form-input" type="number" id="custom-electric" value="${custom.electric || ''}" placeholder="${defaults.electric}" inputmode="numeric">
+                    ${Store.moneyInput('custom-electric', custom.electric || '', Store.formatNumber(defaults.electric || 3500))}
                 </div>
                 <div class="form-group">
                     <label class="form-label">💧 Nước (đ/m³)</label>
-                    <input class="form-input" type="number" id="custom-water" value="${custom.water || ''}" placeholder="${defaults.water}" inputmode="numeric">
+                    ${Store.moneyInput('custom-water', custom.water || '', Store.formatNumber(defaults.water || 15000))}
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">🗑️ Rác (đ/tháng)</label>
-                    <input class="form-input" type="number" id="custom-garbage" value="${custom.garbage || ''}" placeholder="${defaults.garbage}" inputmode="numeric">
+                    ${Store.moneyInput('custom-garbage', custom.garbage || '', Store.formatNumber(defaults.garbage || 20000))}
                 </div>
                 <div class="form-group">
                     <label class="form-label">📶 Internet (đ/tháng)</label>
-                    <input class="form-input" type="number" id="custom-internet" value="${custom.internet || ''}" placeholder="${defaults.internet}" inputmode="numeric">
+                    ${Store.moneyInput('custom-internet', custom.internet || '', Store.formatNumber(defaults.internet || 100000))}
                 </div>
             </div>
-            <div class="btn-group">
-                <button class="btn btn-outline" onclick="RoomView.clearCustomRates()">Xóa giá riêng</button>
-                <button class="btn btn-primary" onclick="RoomView.saveCustomRates()">💾 Lưu</button>
-            </div>
+
+            <button class="btn btn-primary mt-16" onclick="RoomView.saveEditRoom()">💾 Lưu</button>
         `);
     }
 
-    function saveCustomRates() {
+    function saveEditRoom() {
         const e = document.getElementById('custom-electric').value;
         const w = document.getElementById('custom-water').value;
         const g = document.getElementById('custom-garbage').value;
         const i = document.getElementById('custom-internet').value;
 
         const customRates = {};
-        if (e) customRates.electric = parseInt(e);
-        if (w) customRates.water = parseInt(w);
-        if (g) customRates.garbage = parseInt(g);
-        if (i) customRates.internet = parseInt(i);
+        if (e && e !== '0') customRates.electric = Store.parseMoney(e);
+        if (w && w !== '0') customRates.water = Store.parseMoney(w);
+        if (g && g !== '0') customRates.garbage = Store.parseMoney(g);
+        if (i && i !== '0') customRates.internet = Store.parseMoney(i);
 
         Store.updateRoom(currentHouseId, currentRoomId, {
+            name: document.getElementById('edit-room-name').value.trim(),
+            tenant: document.getElementById('edit-room-tenant').value.trim(),
+            phone: document.getElementById('edit-room-phone').value.trim(),
+            rentPrice: Store.parseMoney(document.getElementById('edit-room-rent').value),
             customRates: Object.keys(customRates).length > 0 ? customRates : null
         });
 
         App.hideModal();
-        App.showToast('Đã lưu giá riêng!', 'success');
+        App.showToast('Đã lưu!', 'success');
         render(currentHouseId, currentRoomId);
-    }
-
-    function clearCustomRates() {
-        Store.updateRoom(currentHouseId, currentRoomId, { customRates: null });
-        App.hideModal();
-        App.showToast('Đã xóa giá riêng, dùng giá chung', 'success');
-        render(currentHouseId, currentRoomId);
-    }
-
-    function confirmDelete() {
-        const room = Store.getRoom(currentHouseId, currentRoomId);
-        App.showModal('⚠️ Xác nhận xóa', `
-            <p style="font-size:1.1rem; margin-bottom:20px;">Bạn có chắc muốn xóa <strong>${room.name}</strong>?</p>
-            <div class="btn-group">
-                <button class="btn btn-outline" onclick="App.hideModal()">Hủy</button>
-                <button class="btn btn-danger" onclick="RoomView.deleteRoom()">Xóa</button>
-            </div>
-        `);
-    }
-
-    function deleteRoom() {
-        Store.deleteRoom(currentHouseId, currentRoomId);
-        App.hideModal();
-        App.showToast('Đã xóa phòng', 'success');
-        App.navigate('house', currentHouseId);
     }
 
     function getMonthOptions() {
@@ -269,5 +211,5 @@ const RoomView = (() => {
         render(currentHouseId, currentRoomId);
     }
 
-    return { render, showEditRoom, saveEditRoom, showCustomRates, saveCustomRates, clearCustomRates, confirmDelete, deleteRoom, goToBilling, onMonthChange };
+    return { render, showEditRoom, saveEditRoom, goToBilling, onMonthChange };
 })();

@@ -52,11 +52,16 @@ const HouseView = (() => {
                 }
 
                 html += `
-                    <div class="card" onclick="App.navigate('room', '${houseId}', '${room.id}')">
-                        <div class="card-title">🚪 ${room.name}</div>
-                        <div class="card-subtitle">👤 ${room.tenant || 'Phòng trống'}</div>
-                        <div class="card-meta">
-                            ${statusHtml}
+                    <div class="swipe-wrapper">
+                        <div class="swipe-delete-bg" onclick="HouseView.confirmDeleteRoom('${room.id}', '${room.name}')">🗑️ Xóa</div>
+                        <div class="swipe-card" data-room-id="${room.id}">
+                            <div class="card" onclick="App.navigate('room', '${houseId}', '${room.id}')">
+                                <div class="card-title">🚪 ${room.name}</div>
+                                <div class="card-subtitle">👤 ${room.tenant || 'Phòng trống'}</div>
+                                <div class="card-meta">
+                                    ${statusHtml}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -81,6 +86,73 @@ const HouseView = (() => {
         `;
 
         container.innerHTML = html;
+        initSwipe();
+    }
+
+    function initSwipe() {
+        document.querySelectorAll('.swipe-card').forEach(card => {
+            let startX = 0, currentX = 0, isSwiping = false;
+
+            card.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                isSwiping = true;
+                card.style.transition = 'none';
+            }, { passive: true });
+
+            card.addEventListener('touchmove', (e) => {
+                if (!isSwiping) return;
+                currentX = e.touches[0].clientX;
+                const diff = startX - currentX;
+                if (diff > 0 && diff < 100) {
+                    card.style.transform = `translateX(-${diff}px)`;
+                } else if (diff <= 0) {
+                    card.style.transform = 'translateX(0)';
+                }
+            }, { passive: true });
+
+            card.addEventListener('touchend', () => {
+                isSwiping = false;
+                card.style.transition = 'transform 0.25s ease';
+                const diff = startX - currentX;
+                if (diff > 50) {
+                    card.classList.add('swiped');
+                    card.style.transform = '';
+                    // Close other swiped cards
+                    document.querySelectorAll('.swipe-card.swiped').forEach(c => {
+                        if (c !== card) {
+                            c.classList.remove('swiped');
+                        }
+                    });
+                } else {
+                    card.classList.remove('swiped');
+                    card.style.transform = '';
+                }
+            });
+        });
+
+        // Tap anywhere to close swiped cards
+        document.getElementById('main-content').addEventListener('click', (e) => {
+            if (!e.target.closest('.swipe-wrapper')) {
+                document.querySelectorAll('.swipe-card.swiped').forEach(c => c.classList.remove('swiped'));
+            }
+        });
+    }
+
+    function confirmDeleteRoom(roomId, roomName) {
+        App.showModal('⚠️ Xác nhận xóa', `
+            <p style="font-size:1.1rem; margin-bottom:20px;">Bạn có chắc muốn xóa <strong>${roomName}</strong>?</p>
+            <div class="btn-group">
+                <button class="btn btn-outline" onclick="App.hideModal()">Hủy</button>
+                <button class="btn btn-danger" onclick="HouseView.deleteRoom('${roomId}')">Xóa</button>
+            </div>
+        `);
+    }
+
+    function deleteRoom(roomId) {
+        Store.deleteRoom(currentHouseId, roomId);
+        App.hideModal();
+        App.showToast('Đã xóa phòng', 'success');
+        render(currentHouseId);
     }
 
     function showAddRoom() {
@@ -224,5 +296,5 @@ const HouseView = (() => {
         App.navigate('home');
     }
 
-    return { render, showAddRoom, addRoom, showHouseSettings, saveHouseSettings, confirmDeleteHouse, deleteHouse };
+    return { render, showAddRoom, addRoom, showHouseSettings, saveHouseSettings, confirmDeleteHouse, deleteHouse, confirmDeleteRoom, deleteRoom };
 })();
